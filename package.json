@@ -1,0 +1,34 @@
+{
+  "name": "paperclip-gchat-bridge",
+  "version": "0.1.0-pre",
+  "private": true,
+  "description": "Paperclip ↔ Google Chat human-agent bridge (monorepo root)",
+  "license": "MIT",
+  "homepage": "https://github.com/D1DX/paperclip-gchat-bridge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/D1DX/paperclip-gchat-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/D1DX/paperclip-gchat-bridge/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.0"
+  }
+}

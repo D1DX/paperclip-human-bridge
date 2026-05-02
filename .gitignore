@@ -1,0 +1,42 @@
+node_modules/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Local config + secrets — NEVER commit
+config.yaml
+config.local.yaml
+.env
+.env.*
+!.env.template
+*.sqlite
+*.sqlite-*
+data/
+.dev.vars
+
+# Service account keys
+service-account*.json
+*.gserviceaccount.json
+gcp-key*.json
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Coverage / test output
+coverage/
+.nyc_output/
+
+# Wrangler / Cloudflare
+.wrangler/
+wrangler.toml.local

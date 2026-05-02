@@ -1,0 +1,28 @@
+# paperclip-gchat-bridge config — example template.
+# Copy to `config.yaml` and fill in. Never commit `config.yaml`.
+
+paperclip:
+  api_url: https://paperclip.example.com
+  company_id: 00000000-0000-0000-0000-000000000000
+
+google_chat:
+  bot_name: Paperclip
+  service_account_json_env: GCHAT_SERVICE_ACCOUNT_JSON
+  verification_token_env: GCHAT_VERIFICATION_TOKEN
+
+storage:
+  thread_state_path: /data/dm-thread-state.sqlite
+
+logging:
+  level: info
+  # ntfy_url: https://ntfy.example.com/your-topic    # optional alerts
+
+agents:
+  - id: 00000000-0000-0000-0000-000000000001
+    name: Example Person
+    paperclip_role: engineer
+    gchat_user_id: users/12345678901234567890
+    gchat_email: person@example.com
+    api_key_env: PAPERCLIP_AGENT_KEY_PERSON
+    language: en
+    timezone: UTC

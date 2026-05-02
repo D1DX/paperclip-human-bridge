@@ -1,0 +1,28 @@
+# Example docker-compose for the responder.
+# Copy, edit, and run with: docker compose --env-file .env up -d
+
+services:
+  responder:
+    image: ghcr.io/d1dx/paperclip-gchat-responder:latest
+    # Or build locally:
+    # build:
+    #   context: ../
+    #   dockerfile: packages/responder/Dockerfile
+    restart: unless-stopped
+    environment:
+      PAPERCLIP_API_URL: ${PAPERCLIP_API_URL}
+      GCHAT_VERIFICATION_TOKEN: ${GCHAT_VERIFICATION_TOKEN}
+      GCHAT_SERVICE_ACCOUNT_JSON: ${GCHAT_SERVICE_ACCOUNT_JSON}
+      BRIDGE_CONFIG_PATH: /etc/paperclip-gchat-bridge/config.yaml
+      BRIDGE_DB_PATH: /data/dm-thread-state.sqlite
+      PORT: 8787
+      # Per-agent keys — declare one per agent in your config.yaml:
+      PAPERCLIP_AGENT_KEY_PERSON: ${PAPERCLIP_AGENT_KEY_PERSON}
+    volumes:
+      - ./config.yaml:/etc/paperclip-gchat-bridge/config.yaml:ro
+      - dm-state:/data
+    ports:
+      - "8787:8787"
+
+volumes:
+  dm-state:

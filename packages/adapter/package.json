@@ -1,0 +1,47 @@
+{
+  "name": "@d1dx/paperclip-gchat-adapter",
+  "version": "0.1.0-pre",
+  "description": "Paperclip plugin: Google Chat human-agent adapter. Type \"gchat\" — sends DMs when issues are assigned.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./ui-parser": {
+      "import": "./dist/ui-parser.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "paperclip": {
+    "adapterUiParser": "1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@d1dx/paperclip-gchat-bridge-shared": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "keywords": [
+    "paperclip",
+    "paperclipai",
+    "adapter",
+    "google-chat",
+    "agent",
+    "human"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
