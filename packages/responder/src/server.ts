@@ -15,7 +15,30 @@
 
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { listChannels } from "@d1dx/paperclip-human-bridge-shared";
+import {
+  registerChannel,
+  listChannels,
+  isChannelRegistered,
+  gchatChannel,
+  telegramChannel,
+  slackChannel,
+  whatsappChannel,
+  emailChannel,
+} from "@d1dx/paperclip-human-bridge-shared";
+
+// Register every shipped channel module at module init so the responder can
+// route inbound events to them. Symmetric with the adapter side. The shared
+// registry throws on duplicate id, so guard for the case where module
+// re-imports (test harnesses, hot reload) hit this twice.
+for (const ch of [
+  gchatChannel,
+  telegramChannel,
+  slackChannel,
+  whatsappChannel,
+  emailChannel,
+]) {
+  if (!isChannelRegistered(ch.id)) registerChannel(ch);
+}
 
 const app = new Hono();
 

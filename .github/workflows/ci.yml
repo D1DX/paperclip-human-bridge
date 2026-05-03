@@ -23,6 +23,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Build shared first so workspace consumers (adapter, responder) can
+      # resolve `@d1dx/paperclip-human-bridge-shared` types via dist/.
+      # `pnpm -r build` follows the workspace dep graph topologically.
+      - run: pnpm -r build
+
       - run: pnpm typecheck
 
-      - run: pnpm test
+      - run: pnpm test --if-present
