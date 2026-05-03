@@ -15,7 +15,13 @@ export * from "./channels/registry.js";
 
 // Re-export each channel module under a namespace so consumers can import
 // individual channels (e.g. `import { gchatChannel } from "@d1dx/paperclip-human-bridge-shared"`).
-export { gchatChannel } from "./channels/gchat/index.js";
+export {
+  gchatChannel,
+  makeGchatChannel,
+  renderIssueMessage,
+  type GchatChannelDeps,
+  type GchatAdapterConfig,
+} from "./channels/gchat/index.js";
 export { telegramChannel } from "./channels/telegram/index.js";
 export { slackChannel } from "./channels/slack/index.js";
 export { whatsappChannel } from "./channels/whatsapp/index.js";
