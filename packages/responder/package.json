@@ -32,7 +32,8 @@
   },
   "devDependencies": {
     "tsx": "^4.19.2",
-    "@types/better-sqlite3": "^7.6.12"
+    "@types/better-sqlite3": "^7.6.12",
+    "vitest": "^2.1.8"
   },
   "keywords": [
     "paperclip",
