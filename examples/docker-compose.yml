@@ -3,26 +3,26 @@
 
 services:
   responder:
-    image: ghcr.io/d1dx/paperclip-gchat-responder:latest
-    # Or build locally:
+    image: ghcr.io/d1dx/paperclip-human-responder:latest
+    # Or build locally from the repo root:
     # build:
     #   context: ../
-    #   dockerfile: packages/responder/Dockerfile
+    #   dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       PAPERCLIP_API_URL: ${PAPERCLIP_API_URL}
       GCHAT_VERIFICATION_TOKEN: ${GCHAT_VERIFICATION_TOKEN}
       GCHAT_SERVICE_ACCOUNT_JSON: ${GCHAT_SERVICE_ACCOUNT_JSON}
-      BRIDGE_CONFIG_PATH: /etc/paperclip-gchat-bridge/config.yaml
-      BRIDGE_DB_PATH: /data/dm-thread-state.sqlite
+      RESPONDER_CONFIG: /etc/paperclip-human-bridge/config.yaml
+      RESPONDER_DB: /data/thread-state.db
       PORT: 8787
       # Per-agent keys — declare one per agent in your config.yaml:
-      PAPERCLIP_AGENT_KEY_PERSON: ${PAPERCLIP_AGENT_KEY_PERSON}
+      PAPERCLIP_AGENT_DANIEL: ${PAPERCLIP_AGENT_DANIEL}
     volumes:
-      - ./config.yaml:/etc/paperclip-gchat-bridge/config.yaml:ro
-      - dm-state:/data
+      - ./config.yaml:/etc/paperclip-human-bridge/config.yaml:ro
+      - thread-state:/data
     ports:
       - "8787:8787"
 
 volumes:
-  dm-state:
+  thread-state:

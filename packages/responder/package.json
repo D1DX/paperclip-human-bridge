@@ -10,7 +10,6 @@
   },
   "files": [
     "dist",
-    "Dockerfile",
     "README.md",
     "LICENSE"
   ],
