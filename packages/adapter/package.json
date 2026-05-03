@@ -33,6 +33,9 @@
     "@d1dx/paperclip-human-bridge-shared": "workspace:*",
     "zod": "^3.24.1"
   },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  },
   "keywords": [
     "paperclip",
     "paperclipai",

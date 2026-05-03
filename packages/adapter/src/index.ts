@@ -27,6 +27,8 @@ import {
   whatsappChannel,
   emailChannel,
   type ChannelId,
+  type AgentRef,
+  type IssueContext,
 } from "@d1dx/paperclip-human-bridge-shared";
 
 export const ADAPTER_TYPE = "human" as const;
@@ -75,8 +77,77 @@ interface PaperclipExecuteCtx {
     role: string;
     adapterConfig: { channel?: ChannelId } & Record<string, unknown>;
   };
-  context?: Record<string, unknown>;
+  context?: {
+    issue?: Partial<IssueContext>;
+    wakeReason?: string;
+    bodyOverride?: string;
+  } & Record<string, unknown>;
   config?: Record<string, unknown>;
+}
+
+export interface PaperclipExecuteResult {
+  exitCode: 0 | 1;
+  summary?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  /** Channel-native message id for caller correlation. */
+  externalId?: string;
+}
+
+/**
+ * Map Paperclip's execute ctx into the channel's neutral send ctx.
+ * Throws if required fields are missing (issue.id/title/body/status/url).
+ */
+export function mapExecuteCtxToChannelSend(ctx: PaperclipExecuteCtx) {
+  const channelId = ctx.agent.adapterConfig.channel;
+  if (!channelId) {
+    throw new Error(
+      `[paperclip-human] agent ${ctx.agent.id} has no \`channel\` set in adapterConfig. ` +
+        `Known channels: ${listChannels().join(", ")}.`,
+    );
+  }
+
+  const i = ctx.context?.issue ?? {};
+  const required = ["id", "title", "body", "status", "url"] as const;
+  for (const k of required) {
+    if (typeof i[k] !== "string" || i[k] === "") {
+      throw new Error(
+        `[paperclip-human] execute ctx missing context.issue.${k} (got ${JSON.stringify(i[k])}).`,
+      );
+    }
+  }
+  const issue: IssueContext = {
+    id: i.id as string,
+    title: i.title as string,
+    body: i.body as string,
+    status: i.status as string,
+    url: i.url as string,
+    reporterName: i.reporterName,
+  };
+
+  // adapterConfig carries channel + per-channel fields. Strip the
+  // discriminator before forwarding to keep the channel module free
+  // of the registry's marker key.
+  const { channel: _drop, ...channelConfig } = ctx.agent.adapterConfig;
+
+  const agent: AgentRef = {
+    id: ctx.agent.id,
+    name: ctx.agent.name,
+    role: ctx.agent.role,
+    channel: channelId,
+    channelConfig,
+    apiKeyEnv: `PAPERCLIP_AGENT_${ctx.agent.id.toUpperCase().replace(/-/g, "_")}`,
+  };
+
+  return {
+    channelId,
+    sendCtx: {
+      agent,
+      issue,
+      wakeReason: ctx.context?.wakeReason ?? "assigned",
+      bodyOverride: ctx.context?.bodyOverride,
+    },
+  };
 }
 
 export function createServerAdapter() {
@@ -85,29 +156,45 @@ export function createServerAdapter() {
   return {
     type: ADAPTER_TYPE,
 
-    async execute(ctx: PaperclipExecuteCtx) {
-      const channelId = ctx.agent.adapterConfig.channel;
-      if (!channelId) {
-        throw new Error(
-          `[paperclip-human] agent ${ctx.agent.id} has no \`channel\` set in adapterConfig. ` +
-            `Known channels: ${listChannels().join(", ")}.`,
-        );
+    async execute(ctx: PaperclipExecuteCtx): Promise<PaperclipExecuteResult> {
+      try {
+        const { channelId, sendCtx } = mapExecuteCtxToChannelSend(ctx);
+        const channel = getChannel(channelId);
+        const result = await channel.send(sendCtx);
+        return {
+          exitCode: 0,
+          summary: result.summary,
+          externalId: result.externalId,
+        };
+      } catch (e) {
+        const err = e as Error;
+        return {
+          exitCode: 1,
+          errorCode: err.name || "ExecuteError",
+          errorMessage: err.message,
+        };
       }
-      const channel = getChannel(channelId);
-      // v0.1.0-pre: channel.send() throws on every channel until Phase 3 lands gchat.
-      // Adapter dispatch path itself is fully wired and tested.
-      throw new Error(
-        `[paperclip-human v0.1.0-pre] dispatch wired but channel "${channel.id}" send() not implemented yet. ` +
-          `Track Phase 3 in https://github.com/D1DX/paperclip-human-bridge`,
-      );
     },
 
-    async testEnvironment(_ctx: PaperclipExecuteCtx) {
+    async testEnvironment(ctx: PaperclipExecuteCtx) {
       ensureChannelsRegistered();
-      return {
-        ok: false,
-        message: `testEnvironment() not implemented yet (v0.1.0-pre). Registered channels: ${listChannels().join(", ")}.`,
-      };
+      const channelId = ctx.agent.adapterConfig.channel;
+      if (!channelId) {
+        return {
+          ok: false,
+          message: `agent has no \`channel\` set. Known: ${listChannels().join(", ")}.`,
+        };
+      }
+      try {
+        // Resolution itself verifies the channel is registered.
+        getChannel(channelId);
+        return {
+          ok: true,
+          message: `Channel "${channelId}" is registered. Per-channel auth probe lands in v0.2.`,
+        };
+      } catch (e) {
+        return { ok: false, message: (e as Error).message };
+      }
     },
 
     models: [],
