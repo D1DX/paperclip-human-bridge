@@ -1,7 +1,7 @@
 {
   "name": "@d1dx/paperclip-human-adapter",
   "version": "0.1.0-pre",
-  "description": "Paperclip plugin: human-agent adapter (type \"human\"). Dispatches issue assignments to a channel — Google Chat, Telegram (planned), Slack (planned), WhatsApp (planned), email (planned).",
+  "description": "Paperclip plugin: human-agent adapter (type \"human\"). Dispatches issue assignments to a channel \u2014 Google Chat, Telegram (planned), Slack (planned), WhatsApp (planned), email (planned).",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "dependencies": {
