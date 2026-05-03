@@ -23,6 +23,10 @@
       "import": "./dist/commands.js",
       "types": "./dist/commands.d.ts"
     },
+    "./clients/paperclip": {
+      "import": "./dist/clients/paperclip.js",
+      "types": "./dist/clients/paperclip.d.ts"
+    },
     "./channels": {
       "import": "./dist/channels/registry.js",
       "types": "./dist/channels/registry.d.ts"

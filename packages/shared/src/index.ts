@@ -12,6 +12,7 @@ export * from "./config.js";
 export * from "./types.js";
 export * from "./commands.js";
 export * from "./channels/registry.js";
+export * from "./clients/paperclip.js";
 
 // Re-export each channel module under a namespace so consumers can import
 // individual channels (e.g. `import { gchatChannel } from "@d1dx/paperclip-human-bridge-shared"`).
