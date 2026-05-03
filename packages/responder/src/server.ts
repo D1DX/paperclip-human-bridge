@@ -37,6 +37,8 @@ import {
   InMemoryThreadStore,
   type ThreadStore,
 } from "./state/thread-state.js";
+import { SqliteThreadStore } from "./state/sqlite.js";
+import { loadResponderConfigFromFile } from "./config.js";
 import { dispatchInbound } from "./dispatch.js";
 
 // Register every shipped channel module at module init so the responder can
@@ -151,21 +153,25 @@ export function createApp(opts: CreateAppOptions) {
 
 /**
  * Production bootstrap — config.yaml on disk + env-driven Paperclip URL +
- * in-memory thread store (replace with SQLite for multi-process /
- * persistence). Lazily evaluated so tests that import this module
+ * SQLite thread store. Lazily evaluated so tests that import this module
  * (without env) don't crash.
+ *
+ * Env vars:
+ *   PAPERCLIP_API_URL      — base URL for Paperclip REST
+ *   RESPONDER_CONFIG       — path to config.yaml (default ./config.yaml)
+ *   RESPONDER_DB           — path to SQLite file (default ./thread-state.db)
  */
 function bootstrapDefaults() {
   const baseUrl = process.env.PAPERCLIP_API_URL;
   if (!baseUrl) {
     throw new Error("PAPERCLIP_API_URL env var not set.");
   }
-  // config.yaml parsing lands in Phase 5b — for now bootstrap with []
-  // so the server can start in healthcheck-only mode while we wire up
-  // production secrets.
-  const agents: AgentEntry[] = [];
+  const configPath = process.env.RESPONDER_CONFIG ?? "./config.yaml";
+  const dbPath = process.env.RESPONDER_DB ?? "./thread-state.db";
+  const agents: AgentEntry[] = loadResponderConfigFromFile(configPath);
   const paperclip = makePaperclipClient({ baseUrl });
-  return createApp({ agents, paperclip });
+  const threads = new SqliteThreadStore({ path: dbPath });
+  return createApp({ agents, paperclip, threads });
 }
 
 const port = Number(process.env.PORT ?? 8787);

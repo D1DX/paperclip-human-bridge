@@ -1,41 +1,46 @@
-# paperclip-human-bridge config — example template.
-# Copy to `config.yaml` and fill in. Never commit `config.yaml`.
-
-paperclip:
-  api_url: https://paperclip.example.com
-  company_id: 00000000-0000-0000-0000-000000000000
-
-channels:
-  gchat:
-    bot_name: Paperclip
-    service_account_json_env: GCHAT_SERVICE_ACCOUNT_JSON
-    verification_token_env: GCHAT_VERIFICATION_TOKEN
-  # telegram: { bot_token_env: TELEGRAM_BOT_TOKEN }    # v0.2+
-  # slack:    { signing_secret_env: SLACK_SIGNING_SECRET, bot_token_env: SLACK_BOT_TOKEN }   # v0.2+
-
-storage:
-  thread_state_path: /data/thread-state.sqlite
-
-logging:
-  level: info
-  # ntfy_url: https://ntfy.example.com/your-topic    # optional alerts
+# paperclip-human-bridge — responder config.yaml example.
+# Copy to ./config.yaml (or RESPONDER_CONFIG path) and fill in.
+# NEVER commit config.yaml — only this template.
+#
+# All Paperclip URL + channel-secret values come from env vars, not
+# this file (one-secret-one-consumer policy). This file maps each
+# human agent's identity on a channel ↔ their Paperclip agent record
+# ↔ the env-var name holding their per-agent Paperclip API key.
+#
+# Required env vars (production):
+#   PAPERCLIP_API_URL                — base URL (e.g. https://paperclip.example.com)
+#   GCHAT_SERVICE_ACCOUNT_JSON       — full SA JSON (rendered via op inject)
+#   GCHAT_VERIFICATION_TOKEN         — Chat-app verification token
+#   PAPERCLIP_AGENT_<NAME>           — per-agent API key (one per row below)
+#
+# Optional env vars:
+#   RESPONDER_CONFIG                 — path to this file (default ./config.yaml)
+#   RESPONDER_DB                     — SQLite path (default ./thread-state.db)
+#   PORT                             — HTTP port (default 8787)
 
 agents:
-  # Google Chat human agent (v0.1)
-  - id: 00000000-0000-0000-0000-000000000001
-    name: Example Person
-    paperclip_role: engineer
-    api_key_env: PAPERCLIP_AGENT_KEY_PERSON
-    language: en
-    timezone: UTC
+  # Google Chat human agent (v0.1 — only channel with real impl).
+  - id: 00000000-0000-0000-0000-000000000001  # Paperclip agent UUID
+    name: Daniel
+    role: engineer
     channel: gchat
-    gchat_user_id: users/12345678901234567890
-    responder_url: https://human-bridge.example.com
+    channelConfig:
+      gchatUserId: users/12345678901234567890     # Chat user resource name
+      gchatUserSpace: spaces/AAAAAAAAAAA          # DM space (cached after first send)
+      responderUrl: https://human-bridge.example.com
+      language: en
+      timezone: Asia/Bangkok
+    apiKeyEnv: PAPERCLIP_AGENT_DANIEL              # env var holding the Paperclip key
 
-  # Telegram human agent (v0.2+, currently rejects with "not implemented")
+  # More agents follow the same shape:
   # - id: 00000000-0000-0000-0000-000000000002
-  #   name: Example Person 2
-  #   paperclip_role: pm
-  #   api_key_env: PAPERCLIP_AGENT_KEY_PERSON_2
-  #   channel: telegram
-  #   telegram_chat_id: "123456789"
+  #   name: Wannapa
+  #   channel: gchat
+  #   channelConfig:
+  #     gchatUserId: users/22222222222222222222
+  #   apiKeyEnv: PAPERCLIP_AGENT_WANNAPA
+
+  # Other channels (telegram, slack, whatsapp, email) are placeholder modules
+  # in v0.1 — registering an agent on one of them parses fine but the channel's
+  # send/parseInboundEvent throws "not implemented". Track v0.2 milestones
+  # at https://github.com/D1DX/paperclip-human-bridge.
