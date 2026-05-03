@@ -19,7 +19,7 @@ HTTP service that receives channel events when a human replies in their Papercli
 | `PAPERCLIP_API_URL` | yes | Paperclip base URL (e.g. `https://paperclip.example.com`) |
 | `BRIDGE_CONFIG_PATH` | yes | Path to `config.yaml` |
 | `BRIDGE_DB_PATH` | yes | SQLite path for thread-state |
-| `GCHAT_VERIFICATION_TOKEN` | for gchat agents | Token Google sends on every Chat event |
+| `GCHAT_AUDIENCE` | for gchat agents | Expected `aud` claim of inbound OIDC JWTs (responder URL or bot project number) |
 | `GCHAT_SERVICE_ACCOUNT_JSON` | for gchat agents | Service account JSON for fetching profiles + attachments |
 | `PAPERCLIP_AGENT_KEY_*` | yes | Per-agent API keys, one env var per agent |
 | `PORT` | no | HTTP port (default `8787`) |

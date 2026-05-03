@@ -21,8 +21,8 @@ First concrete `Channel` implementation in this repo. Reference for any future c
 
 ## Required env at the responder side
 
-- `GCHAT_VERIFICATION_TOKEN` — Google sends this on every event for auth
-- `GCHAT_SERVICE_ACCOUNT_JSON` — for fetching profiles + attachments
+- `GCHAT_AUDIENCE` — expected `aud` claim of the inbound OIDC JWT (Google retired the `X-Verification-Token` model in 2024). Match the value set in the GCP Console Chat API "Authentication audience" field — typically the responder's public URL or the bot's GCP project number.
+- `GCHAT_SERVICE_ACCOUNT_JSON` — for fetching profiles + attachments and for outbound DM sends
 
 ## Status
 

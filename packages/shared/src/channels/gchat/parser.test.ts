@@ -8,6 +8,11 @@ vi.mock("google-auth-library", () => ({
       return { token: "fake-access-token" };
     }
   },
+  OAuth2Client: class {
+    async verifyIdToken() {
+      throw new Error("test must inject oauth2Client override");
+    }
+  },
 }));
 
 const SA: ServiceAccountKey = {
@@ -15,11 +20,30 @@ const SA: ServiceAccountKey = {
   private_key: "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
 };
 
-const VTOKEN = "verify-token-abc123";
+const AUDIENCE = "https://human-bridge.example.com";
+const CHAT_ISSUER = "chat@system.gserviceaccount.com";
 
-function makeRequest(body: unknown, token: string | null = VTOKEN): Request {
+/** Build a minimal mock OAuth2Client that returns the supplied payload. */
+function makeMockVerifier(payload: { iss?: string; aud?: string | string[]; email?: string } | undefined) {
+  return {
+    verifyIdToken: vi.fn(async () => ({
+      getPayload: () => payload,
+    })),
+  };
+}
+
+/** Build a verifier that throws (e.g. signature failure, expired token). */
+function makeFailingVerifier(message: string) {
+  return {
+    verifyIdToken: vi.fn(async () => {
+      throw new Error(message);
+    }),
+  };
+}
+
+function makeRequest(body: unknown, authHeader: string | null = `Bearer fake.jwt.token`): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token !== null) headers["X-Verification-Token"] = token;
+  if (authHeader !== null) headers["Authorization"] = authHeader;
   return new Request("https://example.test/event/gchat", {
     method: "POST",
     headers,
@@ -38,32 +62,118 @@ const baseEvent = {
   },
 };
 
-describe("gchat parser — token verification", () => {
-  const parse = makeGchatParser({ serviceAccount: SA, verificationToken: VTOKEN });
+const happyPayload = { iss: CHAT_ISSUER, aud: AUDIENCE, email: CHAT_ISSUER };
 
-  it("rejects missing token header", async () => {
+describe("gchat parser — JWT verification", () => {
+  it("rejects missing Authorization header", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
     await expect(
       parse({ request: makeRequest(baseEvent, null) }),
-    ).rejects.toThrow(/missing X-Verification-Token/);
+    ).rejects.toThrow(/missing Authorization header/);
   });
 
-  it("rejects mismatched token", async () => {
+  it("rejects non-Bearer Authorization", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
     await expect(
-      parse({ request: makeRequest(baseEvent, "wrong") }),
-    ).rejects.toThrow(/X-Verification-Token mismatch/);
+      parse({ request: makeRequest(baseEvent, "Basic abc123") }),
+    ).rejects.toThrow(/not a Bearer token/);
   });
 
-  it("accepts matching token", async () => {
+  it("rejects empty Bearer token", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
+    await expect(
+      parse({ request: makeRequest(baseEvent, "Bearer    ") }),
+    ).rejects.toThrow(/empty/);
+  });
+
+  it("rejects when verifyIdToken throws (bad signature / expired / wrong audience)", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeFailingVerifier("Wrong recipient, payload audience != requiredAudience"),
+    });
+    await expect(parse({ request: makeRequest(baseEvent) })).rejects.toThrow(
+      /OIDC JWT verification failed/,
+    );
+  });
+
+  it("rejects when payload is undefined", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(undefined),
+    });
+    await expect(parse({ request: makeRequest(baseEvent) })).rejects.toThrow(
+      /no payload/,
+    );
+  });
+
+  it("rejects when iss is not chat@system.gserviceaccount.com", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier({ iss: "evil@attacker.com", aud: AUDIENCE }),
+    });
+    await expect(parse({ request: makeRequest(baseEvent) })).rejects.toThrow(
+      /iss "evil@attacker.com" is not/,
+    );
+  });
+
+  it("rejects when aud does not match expected audience (defensive check)", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier({ iss: CHAT_ISSUER, aud: "https://other.example" }),
+    });
+    await expect(parse({ request: makeRequest(baseEvent) })).rejects.toThrow(
+      /aud "https:\/\/other\.example" does not match expected/,
+    );
+  });
+
+  it("accepts valid JWT (iss + aud both correct)", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
+    const result = await parse({ request: makeRequest(baseEvent) });
+    expect(result.senderExternalId).toBe("users/123");
+  });
+
+  it("accepts JWT whose aud is an array containing the expected audience", async () => {
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier({ iss: CHAT_ISSUER, aud: [AUDIENCE, "https://other"] }),
+    });
     const result = await parse({ request: makeRequest(baseEvent) });
     expect(result.senderExternalId).toBe("users/123");
   });
 });
 
 describe("gchat parser — event extraction", () => {
-  const parse = makeGchatParser({ serviceAccount: SA, verificationToken: VTOKEN });
+  function newParse() {
+    return makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
+  }
 
   it("extracts sender, thread, and parses comment", async () => {
-    const result = await parse({ request: makeRequest(baseEvent) });
+    const result = await newParse()({ request: makeRequest(baseEvent) });
     expect(result).toMatchObject({
       senderExternalId: "users/123",
       threadExternalId: "spaces/AAA/threads/TTT",
@@ -77,7 +187,7 @@ describe("gchat parser — event extraction", () => {
       ...baseEvent,
       message: { ...baseEvent.message, text: "/done deployed" },
     };
-    const result = await parse({ request: makeRequest(ev) });
+    const result = await newParse()({ request: makeRequest(ev) });
     expect(result.command).toEqual({ kind: "done", summary: "deployed" });
   });
 
@@ -93,7 +203,7 @@ describe("gchat parser — event extraction", () => {
         ],
       },
     };
-    const result = await parse({ request: makeRequest(ev) });
+    const result = await newParse()({ request: makeRequest(ev) });
     expect(result.command).toEqual({
       kind: "attachment",
       body: "see file",
@@ -106,14 +216,14 @@ describe("gchat parser — event extraction", () => {
 
   it("rejects unsupported event type", async () => {
     const ev = { ...baseEvent, type: "ADDED_TO_SPACE" };
-    await expect(parse({ request: makeRequest(ev) })).rejects.toThrow(
+    await expect(newParse()({ request: makeRequest(ev) })).rejects.toThrow(
       /event type "ADDED_TO_SPACE" not supported/,
     );
   });
 
   it("rejects event missing user.name", async () => {
     const ev = { ...baseEvent, user: {} };
-    await expect(parse({ request: makeRequest(ev) })).rejects.toThrow(
+    await expect(newParse()({ request: makeRequest(ev) })).rejects.toThrow(
       /missing user\.name/,
     );
   });
@@ -123,7 +233,7 @@ describe("gchat parser — event extraction", () => {
       ...baseEvent,
       message: { ...baseEvent.message, thread: {} },
     };
-    await expect(parse({ request: makeRequest(ev) })).rejects.toThrow(
+    await expect(newParse()({ request: makeRequest(ev) })).rejects.toThrow(
       /missing message\.thread\.name/,
     );
   });
@@ -132,7 +242,7 @@ describe("gchat parser — event extraction", () => {
 describe("gchat parser — replyInChannel closure", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
   beforeEach(() => {
-    fetchMock = vi.fn().mockResolvedValue(
+    fetchMock = vi.fn().mockImplementation(async () =>
       new Response(
         JSON.stringify({
           name: "spaces/AAA/messages/REPLY",
@@ -149,7 +259,11 @@ describe("gchat parser — replyInChannel closure", () => {
   });
 
   it("posts back to the same thread with extracted threadKey", async () => {
-    const parse = makeGchatParser({ serviceAccount: SA, verificationToken: VTOKEN });
+    const parse = makeGchatParser({
+      serviceAccount: SA,
+      audience: AUDIENCE,
+      oauth2Client: makeMockVerifier(happyPayload),
+    });
     const result = await parse({ request: makeRequest(baseEvent) });
     await result.replyInChannel("got it");
     expect(fetchMock).toHaveBeenCalledTimes(1);

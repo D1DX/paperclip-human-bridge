@@ -10,7 +10,7 @@
 # Required env vars (production):
 #   PAPERCLIP_API_URL                — base URL (e.g. https://paperclip.example.com)
 #   GCHAT_SERVICE_ACCOUNT_JSON       — full SA JSON (rendered via op inject)
-#   GCHAT_VERIFICATION_TOKEN         — Chat-app verification token
+#   GCHAT_AUDIENCE                   — expected JWT aud (responder URL or project number)
 #   PAPERCLIP_AGENT_<NAME>           — per-agent API key (one per row below)
 #
 # Optional env vars:

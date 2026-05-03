@@ -7,18 +7,23 @@
  *     `registerChannel(gchatChannel)` at module init; deps load on first
  *     send/parse call so apps can fail-fast at registration without
  *     yet having credentials in env.
- *   - `makeGchatChannel({serviceAccount, verificationToken})`: an
- *     explicit-deps factory for tests and Worker deployments where env
- *     reading is wrong (Worker secrets ≠ process.env).
+ *   - `makeGchatChannel({serviceAccount, audience})`: an explicit-deps
+ *     factory for tests and Worker deployments where env reading is
+ *     wrong (Worker secrets ≠ process.env).
  *
  * Env vars (default lazy-init path):
  *   - GCHAT_SERVICE_ACCOUNT_JSON — full service account JSON, raw or
  *     `op://` reference rendered by `op inject`.
- *   - GCHAT_VERIFICATION_TOKEN   — Chat-app verification token.
+ *   - GCHAT_AUDIENCE             — expected `aud` claim of inbound
+ *     OIDC JWTs. Match what's set in the GCP Console Chat API
+ *     "Authentication audience" field — typically the responder's
+ *     public URL (e.g. `https://human-bridge.example.com`) or the bot's
+ *     project number as a string.
  *
  * Outbound: send() renders a header + issue context + body, calls
  * sendDmMessage. Inbound: parseInboundEvent() delegates to the parser
- * factory.
+ * factory which performs OIDC JWT verification (Google retired the
+ * X-Verification-Token model in 2024).
  */
 import type { Channel } from "../registry.js";
 import {
@@ -29,21 +34,21 @@ import { makeGchatParser } from "./parser.js";
 
 export interface GchatChannelDeps {
   serviceAccount: ServiceAccountKey;
-  verificationToken: string;
+  audience: string;
 }
 
 /** Default lazy env reader — used by the singleton `gchatChannel`. */
 function loadDepsFromEnv(): GchatChannelDeps {
   const saRaw = process.env.GCHAT_SERVICE_ACCOUNT_JSON;
-  const vtok = process.env.GCHAT_VERIFICATION_TOKEN;
+  const aud = process.env.GCHAT_AUDIENCE;
   if (!saRaw) {
     throw new Error(
       "[gchat channel] GCHAT_SERVICE_ACCOUNT_JSON env var not set.",
     );
   }
-  if (!vtok) {
+  if (!aud) {
     throw new Error(
-      "[gchat channel] GCHAT_VERIFICATION_TOKEN env var not set.",
+      "[gchat channel] GCHAT_AUDIENCE env var not set (expected JWT audience — e.g. https://human-bridge.example.com or the bot's GCP project number).",
     );
   }
   let serviceAccount: ServiceAccountKey;
@@ -59,7 +64,7 @@ function loadDepsFromEnv(): GchatChannelDeps {
       "[gchat channel] service account JSON missing client_email or private_key.",
     );
   }
-  return { serviceAccount, verificationToken: vtok };
+  return { serviceAccount, audience: aud };
 }
 
 /**

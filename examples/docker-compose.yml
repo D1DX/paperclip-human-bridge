@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     environment:
       PAPERCLIP_API_URL: ${PAPERCLIP_API_URL}
-      GCHAT_VERIFICATION_TOKEN: ${GCHAT_VERIFICATION_TOKEN}
+      GCHAT_AUDIENCE: ${GCHAT_AUDIENCE}
       GCHAT_SERVICE_ACCOUNT_JSON: ${GCHAT_SERVICE_ACCOUNT_JSON}
       RESPONDER_CONFIG: /etc/paperclip-human-bridge/config.yaml
       RESPONDER_DB: /data/thread-state.db

@@ -9,6 +9,13 @@ vi.mock("google-auth-library", () => ({
       return { token: "fake-access-token" };
     }
   },
+  OAuth2Client: class {
+    async verifyIdToken() {
+      // index.test.ts only exercises send() + renderIssueMessage —
+      // never invokes the parser, so this stub never executes.
+      throw new Error("not used in send-side tests");
+    }
+  },
 }));
 
 const SA: ServiceAccountKey = {
@@ -16,7 +23,7 @@ const SA: ServiceAccountKey = {
   private_key: "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
 };
 
-const VTOKEN = "verify-token";
+const AUDIENCE = "https://human-bridge.example.test";
 
 const issue: IssueContext = {
   id: "ISS-123",
@@ -74,7 +81,7 @@ describe("makeGchatChannel.send", () => {
   });
 
   it("calls Chat send with rendered body in the agent's space, threaded by issue.id", async () => {
-    const ch = makeGchatChannel({ serviceAccount: SA, verificationToken: VTOKEN });
+    const ch = makeGchatChannel({ serviceAccount: SA, audience: AUDIENCE });
     const result = await ch.send({ agent, issue, wakeReason: "assigned" });
     expect(result.externalId).toBe("spaces/AAA/messages/MMM.NNN");
     expect(result.summary).toMatch(/Daniel/);
@@ -88,7 +95,7 @@ describe("makeGchatChannel.send", () => {
   });
 
   it("throws if agent.channelConfig.gchatUserSpace is missing", async () => {
-    const ch = makeGchatChannel({ serviceAccount: SA, verificationToken: VTOKEN });
+    const ch = makeGchatChannel({ serviceAccount: SA, audience: AUDIENCE });
     const naked: AgentRef = { ...agent, channelConfig: {} };
     await expect(
       ch.send({ agent: naked, issue, wakeReason: "assigned" }),
