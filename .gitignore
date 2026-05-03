@@ -40,3 +40,9 @@ coverage/
 # Wrangler / Cloudflare
 .wrangler/
 wrangler.toml.local
+credentials.json
+*.har
+*.pem
+*.key
+GEMINI.md
+.gemini/settings.json

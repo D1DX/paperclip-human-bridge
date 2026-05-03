@@ -1,16 +1,16 @@
 {
-  "name": "paperclip-gchat-bridge",
+  "name": "paperclip-human-bridge",
   "version": "0.1.0-pre",
   "private": true,
-  "description": "Paperclip ↔ Google Chat human-agent bridge (monorepo root)",
+  "description": "Paperclip human-agent bridge (monorepo root) — channel-pluggable adapter plus companion responder service",
   "license": "MIT",
-  "homepage": "https://github.com/D1DX/paperclip-gchat-bridge",
+  "homepage": "https://github.com/D1DX/paperclip-human-bridge",
   "repository": {
     "type": "git",
-    "url": "https://github.com/D1DX/paperclip-gchat-bridge.git"
+    "url": "https://github.com/D1DX/paperclip-human-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/D1DX/paperclip-gchat-bridge/issues"
+    "url": "https://github.com/D1DX/paperclip-human-bridge/issues"
   },
   "engines": {
     "node": ">=20"

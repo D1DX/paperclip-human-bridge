@@ -1,10 +1,10 @@
 /**
  * Shared types used by the adapter and responder.
- *
- * v0.1 stubs — concrete shapes filled in during Phase 3.
  */
 
-/** Paperclip agent reference. */
+export type ChannelId = "gchat" | "telegram" | "slack" | "whatsapp" | "email";
+
+/** Generic Paperclip agent reference (channel-neutral fields). */
 export interface AgentRef {
   /** Paperclip agent UUID. */
   id: string;
@@ -12,10 +12,10 @@ export interface AgentRef {
   name: string;
   /** Paperclip role (ceo, cto, engineer, ...). */
   role: string;
-  /** Google Chat user ID (e.g. "users/12345..."). */
-  gchatUserId: string;
-  /** Google Workspace email. */
-  gchatEmail: string;
+  /** Selected channel for this agent. */
+  channel: ChannelId;
+  /** Channel-specific config (validated per-channel by zod discriminated union). */
+  channelConfig: Record<string, unknown>;
   /** Env var name holding this agent's Paperclip API key. */
   apiKeyEnv: string;
   /** ISO language code, e.g. "en", "he", "th". */
@@ -24,7 +24,7 @@ export interface AgentRef {
   timezone?: string;
 }
 
-/** Issue context passed from Paperclip → adapter `execute()` → DM body. */
+/** Issue context passed from Paperclip → adapter `execute()` → channel `send()`. */
 export interface IssueContext {
   id: string;
   title: string;
@@ -34,7 +34,7 @@ export interface IssueContext {
   url: string;
 }
 
-/** Result of parsing a Chat reply against the slash-command grammar. */
+/** Result of parsing a channel reply against the slash-command grammar. */
 export type CommandResult =
   | { kind: "comment"; body: string }
   | { kind: "done"; summary?: string }

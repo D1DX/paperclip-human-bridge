@@ -1,12 +1,12 @@
 {
-  "name": "@d1dx/paperclip-gchat-responder",
+  "name": "@d1dx/paperclip-human-responder",
   "version": "0.1.0-pre",
-  "description": "HTTP service that receives Google Chat events and posts back to Paperclip REST as the assigned agent. Companion to @d1dx/paperclip-gchat-adapter.",
+  "description": "HTTP service that receives channel events (Google Chat, Telegram planned, Slack planned, ...) and posts back to Paperclip REST as the assigned agent. Companion to @d1dx/paperclip-human-adapter.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/server.js",
   "bin": {
-    "paperclip-gchat-responder": "./dist/cli.js"
+    "paperclip-human-responder": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -23,7 +23,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@d1dx/paperclip-gchat-bridge-shared": "workspace:*",
+    "@d1dx/paperclip-human-bridge-shared": "workspace:*",
     "hono": "^4.6.13",
     "@hono/node-server": "^1.13.7",
     "better-sqlite3": "^11.7.0",
@@ -37,9 +37,11 @@
   "keywords": [
     "paperclip",
     "paperclipai",
-    "google-chat",
     "responder",
-    "webhook"
+    "webhook",
+    "google-chat",
+    "telegram",
+    "slack"
   ],
   "publishConfig": {
     "access": "public"

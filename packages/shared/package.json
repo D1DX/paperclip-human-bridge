@@ -1,7 +1,7 @@
 {
-  "name": "@d1dx/paperclip-gchat-bridge-shared",
+  "name": "@d1dx/paperclip-human-bridge-shared",
   "version": "0.1.0-pre",
-  "description": "Shared types, config schema, Chat + Paperclip API clients, and command parser for the paperclip-gchat-bridge",
+  "description": "Shared types, config schema, channel registry + interface, and channel modules for the paperclip-human-bridge",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,17 +19,25 @@
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
     },
-    "./clients/chat": {
-      "import": "./dist/clients/chat.js",
-      "types": "./dist/clients/chat.d.ts"
+    "./channels": {
+      "import": "./dist/channels/registry.js",
+      "types": "./dist/channels/registry.d.ts"
     },
-    "./clients/paperclip": {
-      "import": "./dist/clients/paperclip.js",
-      "types": "./dist/clients/paperclip.d.ts"
+    "./channels/gchat": {
+      "import": "./dist/channels/gchat/index.js",
+      "types": "./dist/channels/gchat/index.d.ts"
     },
-    "./commands": {
-      "import": "./dist/commands.js",
-      "types": "./dist/commands.d.ts"
+    "./channels/telegram": {
+      "import": "./dist/channels/telegram/index.js"
+    },
+    "./channels/slack": {
+      "import": "./dist/channels/slack/index.js"
+    },
+    "./channels/whatsapp": {
+      "import": "./dist/channels/whatsapp/index.js"
+    },
+    "./channels/email": {
+      "import": "./dist/channels/email/index.js"
     }
   },
   "files": [

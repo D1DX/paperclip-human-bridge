@@ -1,7 +1,7 @@
 {
-  "name": "@d1dx/paperclip-gchat-adapter",
+  "name": "@d1dx/paperclip-human-adapter",
   "version": "0.1.0-pre",
-  "description": "Paperclip plugin: Google Chat human-agent adapter. Type \"gchat\" — sends DMs when issues are assigned.",
+  "description": "Paperclip plugin: human-agent adapter (type \"human\"). Dispatches issue assignments to a channel — Google Chat, Telegram (planned), Slack (planned), WhatsApp (planned), email (planned).",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,16 +30,18 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@d1dx/paperclip-gchat-bridge-shared": "workspace:*",
+    "@d1dx/paperclip-human-bridge-shared": "workspace:*",
     "zod": "^3.24.1"
   },
   "keywords": [
     "paperclip",
     "paperclipai",
     "adapter",
-    "google-chat",
+    "human",
     "agent",
-    "human"
+    "google-chat",
+    "telegram",
+    "slack"
   ],
   "publishConfig": {
     "access": "public"
