@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version pinned via root package.json `packageManager` field —
+      # pnpm/action-setup rejects specifying both. Keeping packageManager
+      # makes corepack the source of truth across CI + dev machines.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
