@@ -19,6 +19,10 @@
       "import": "./dist/types.js",
       "types": "./dist/types.d.ts"
     },
+    "./commands": {
+      "import": "./dist/commands.js",
+      "types": "./dist/commands.d.ts"
+    },
     "./channels": {
       "import": "./dist/channels/registry.js",
       "types": "./dist/channels/registry.d.ts"

@@ -10,6 +10,7 @@
 
 export * from "./config.js";
 export * from "./types.js";
+export * from "./commands.js";
 export * from "./channels/registry.js";
 
 // Re-export each channel module under a namespace so consumers can import
